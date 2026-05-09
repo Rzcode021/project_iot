@@ -114,6 +114,50 @@ app.get('/api/latest', (req, res) => {
     });
 });
 
+// --- Backward Compatibility Routes for your ESP8266 code ---
+
+// 1. Receive data via GET request
+app.get('/save-sensor', (req, res) => {
+    const { temp, hum } = req.query;
+    
+    const newRecord = {
+        timestamp: new Date().toISOString(),
+        temperature: parseFloat(temp) || 0,
+        humidity: parseFloat(hum) || 0,
+        soilMoisture: 0, // Your code doesn't send this yet
+        intrusion: false, // Your code doesn't send this yet
+        status: 'Safe'
+    };
+
+    const data = readData();
+    data.unshift(newRecord);
+    if (data.length > 100) data.pop();
+    writeData(data);
+    
+    res.send("Data Saved");
+});
+
+// 2. LCD Text API
+app.get('/get-lcd-text', (req, res) => {
+    const data = readData();
+    const latest = data[0];
+    if (latest) {
+        res.send(`Temp:${latest.temperature}C Hum:${latest.humidity}%`);
+    } else {
+        res.send("System Active");
+    }
+});
+
+// 3. Prediction API (Returns the format your JSON parser expects)
+app.get('/prediction', (req, res) => {
+    // You can later connect this to your ngrok API. 
+    // For now, it returns the exact JSON structure your ESP is looking for:
+    res.json({
+        predicted_temperature: [28.0],
+        predicted_humidity: [61.5]
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
