@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Smart AgriGuard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                        <span class="font-bold text-xl text-gray-900 tracking-tight">Smart AgriGuard</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard" class="text-gray-500 hover:text-teal-600 font-medium px-3 py-2 rounded-md text-sm transition-colors">Dashboard</a>
+                    <a href="/analytics" class="text-teal-600 font-medium px-3 py-2 rounded-md text-sm hover:bg-teal-50 transition-colors">Analytics</a>
+                    <a href="/" class="ml-4 px-4 py-2 text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 rounded-lg transition-colors">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">Data Analytics</h2>
+            <div class="text-sm text-gray-500">Showing last <span class="font-bold text-teal-600">50</span> readings</div>
+        </div>
+
+        <!-- Temperature Chart -->
+        <div class="glass-card rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+                <h3 class="text-lg font-semibold text-gray-800">Temperature Trend (°C)</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="tempChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Humidity Chart -->
+        <div class="glass-card rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                <h3 class="text-lg font-semibold text-gray-800">Humidity Trend (%)</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="humChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Soil Moisture Chart -->
+        <div class="glass-card rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-3 h-3 rounded-full bg-amber-600"></div>
+                <h3 class="text-lg font-semibold text-gray-800">Soil Moisture Trend (%)</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="soilChart"></canvas>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Chart configuration options
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { 
+                    grid: { display: false, drawBorder: false },
+                    ticks: { maxTicksLimit: 10, color: '#94a3b8' }
+                },
+                y: { 
+                    grid: { color: '#f1f5f9', drawBorder: false },
+                    ticks: { color: '#94a3b8' }
+                }
+            },
+            elements: {
+                line: { tension: 0.4, borderWidth: 3 },
+                point: { radius: 0, hitRadius: 10, hoverRadius: 6 }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            }
+        };
+
+        // Initialize charts
+        const ctxTemp = document.getElementById('tempChart').getContext('2d');
+        const tempChart = new Chart(ctxTemp, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Temperature (°C)', data: [], borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.1)', fill: true }] },
+            options: commonOptions
+        });
+
+        const ctxHum = document.getElementById('humChart').getContext('2d');
+        const humChart = new Chart(ctxHum, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Humidity (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true }] },
+            options: commonOptions
+        });
+
+        const ctxSoil = document.getElementById('soilChart').getContext('2d');
+        const soilChart = new Chart(ctxSoil, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Soil Moisture (%)', data: [], borderColor: '#d97706', backgroundColor: 'rgba(217, 119, 6, 0.1)', fill: true }] },
+            options: commonOptions
+        });
+
+        async function updateCharts() {
+            try {
+                const response = await fetch('/api/latest');
+                const data = await response.json();
+
+                if (data.history && data.history.length > 0) {
+                    // History is returned newest first, reverse for chronological chart
+                    const chartData = [...data.history].reverse();
+                    
+                    const labels = chartData.map(d => {
+                        const date = new Date(d.timestamp);
+                        return `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}:${date.getSeconds().toString().padStart(2,'0')}`;
+                    });
+
+                    // Update Temperature Chart
+                    tempChart.data.labels = labels;
+                    tempChart.data.datasets[0].data = chartData.map(d => d.temperature);
+                    tempChart.update();
+
+                    // Update Humidity Chart
+                    humChart.data.labels = labels;
+                    humChart.data.datasets[0].data = chartData.map(d => d.humidity);
+                    humChart.update();
+
+                    // Update Soil Moisture Chart
+                    soilChart.data.labels = labels;
+                    soilChart.data.datasets[0].data = chartData.map(d => d.soilMoisture);
+                    soilChart.update();
+                }
+            } catch (error) {
+                console.error('Error updating charts:', error);
+            }
+        }
+
+        // Initial fetch and set interval
+        updateCharts();
+        setInterval(updateCharts, 8000);
+    </script>
+</body>
+</html>
